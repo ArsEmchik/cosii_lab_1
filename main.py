@@ -7,36 +7,33 @@ count = 0
 # N = 64
 
 
-class FourierTransformation:
-    def __init__(self, ValueVector):
-        self.ValueVector = ValueVector
-
-    def get_ValuesVector(self):
-        return self.ValueVector
-
-    def DFT(self, dir):
+class FourierTransformation(object):
+    @staticmethod
+    def DFT(ValueVector, dir):
         if dir != 1 and dir != -1:
             return 0
 
-        N = len(self.ValueVector)
+        N = len(ValueVector)
         output = [0] * N
 
         for k in xrange(N):
             for m in xrange(N):
-                output[k] += self.ValueVector[m] * np.exp(-dir * 2j * np.pi * k * m / N)
+                output[k] += ValueVector[m] * np.exp(-dir * 2j * np.pi * k * m / N)
                 # count += 1
             if dir == 1:
                 output[k] /= N
 
         return output
 
-    def FFFT(self, dir):
-        return self.__FFFTReOrder(self.__FFT(self.ValueVector, dir))
-
+    @staticmethod
+    def FFFT(ValueVector, dir):
+        result = FourierTransformation.__FFT(ValueVector, dir)
+        return FourierTransformation.__FFFTReOrder(result)
 
     # private
 
-    def __FFT(self, a, dir):
+    @staticmethod
+    def __FFT(a, dir):
         N = len(a)
         if N == 1:
             return a
@@ -53,8 +50,8 @@ class FourierTransformation:
             w *= wN
             # count +=1
 
-        b_left = self.__FFT(left, dir)
-        b_right = self.__FFT(right, dir)
+        b_left = FourierTransformation.__FFT(left, dir)
+        b_right = FourierTransformation.__FFT(right, dir)
 
         if dir == 1:
             for j in xrange(N / 2):
@@ -66,7 +63,8 @@ class FourierTransformation:
                 y[j + N / 2] = b_right[j]
         return y
 
-    def __FFFTReOrder(self, result):
+    @staticmethod
+    def __FFFTReOrder(result):
         length = len(result)
         r = 0
 
@@ -74,12 +72,13 @@ class FourierTransformation:
             return result
 
         for x in range(1, length):
-            r = self.__rev_next(r, length)
+            r = FourierTransformation.__rev_next(r, length)
             if r > x:
                 result[x], result[r] = result[r], result[x]
         return result
 
-    def __rev_next(self, r, length):
+    @staticmethod
+    def __rev_next(r, length):
         while True:
             length >>= 1
             r ^= length
@@ -94,26 +93,16 @@ def my_func(x):
 n = 64
 x = np.arange(0, period, period / n)
 y = my_func(x)
-FT = FourierTransformation(y)
 
-
-# ==============================================
-# PLOT
-# ==============================================
-# count = 0
-y_dft = FT.DFT(1)
-# print 'DFT', count
+y_dft = FourierTransformation.DFT(y, 1)
 dft_abs = map(abs, y_dft)
 dft_phase = map(cmath.phase, y_dft)
-y_idft = np.real(FT.DFT(-1))
+y_idft = np.real(FourierTransformation.DFT(y_dft, -1))
 
-# count = 0
-y_fft = FT.FFFT(1)
-# print 'FFFT ', count
+y_fft = FourierTransformation.FFFT(y, 1)
 fft_abs = map(abs, y_fft)
 fft_phase = map(cmath.phase, y_fft)
-y_ifft = np.real(np.divide(FT.FFFT(-1), n))
-# y_ifft = np.real(FT.FFFT(-1))
+y_ifft = np.real(np.divide(FourierTransformation.FFFT(y_fft, -1), n))
 
 fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(6, 6))
 
